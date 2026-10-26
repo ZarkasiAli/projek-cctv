@@ -12,22 +12,24 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('jadwal', function (Blueprint $table) {
-    $table->increments('id');
-    $table->unsignedInteger('ruangan_id');
-    $table->string('hari', 20);
-    $table->time('jam_mulai');
-    $table->time('jam_selesai');
-    $table->string('mata_kuliah', 100);
-    $table->string('dosen', 100);
-    $table->string('prodi', 50);
-    $table->string('kelas', 50);
+            $table->increments('id');
+            $table->unsignedInteger('ruangan_id');
+            $table->string('hari', 20)->nullable();
+            $table->date('tanggal')->nullable();
+            $table->time('jam_mulai');
+            $table->time('jam_selesai');
+            $table->string('mata_kuliah', 100);
+            $table->string('dosen', 100);
+            $table->string('prodi', 50)->default('Teknik Informatika');
+            $table->string('kelas', 50)->default('Kelas A');
 
-    $table->foreign('ruangan_id')
-          ->references('id')
-          ->on('ruangan');
+            $table->foreign('ruangan_id')
+                  ->references('id')
+                  ->on('ruangan')
+                  ->onDelete('cascade');
 
-    $table->timestamps();
-});
+            $table->timestamps();
+        });
     }
 
     /**
