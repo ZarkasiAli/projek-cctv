@@ -11,24 +11,27 @@ return new class extends Migration
      */
     public function up(): void
     {
-     Schema::create('sesi_kelas', function (Blueprint $table) {
-    $table->increments('id');
-    $table->unsignedInteger('jadwal_id');
-    $table->date('tanggal');
-    $table->enum('status_verifikasi', ['belum', 'terverifikasi'])->default('belum');
-    $table->unsignedInteger('diverifikasi_oleh')->nullable();
-    $table->timestamp('diverifikasi_pada')->nullable();
+        Schema::create('sesi_kelas', function (Blueprint $table) {
+            $table->increments('id');
+            $table->unsignedInteger('jadwal_id');
+            $table->date('tanggal');
+            $table->string('status_verifikasi', 30)->default('belum');
+            $table->text('catatan')->nullable();
+            $table->unsignedInteger('diverifikasi_oleh')->nullable();
+            $table->timestamp('diverifikasi_pada')->nullable();
 
-    $table->foreign('jadwal_id')
-          ->references('id')
-          ->on('jadwal');
+            $table->foreign('jadwal_id')
+                  ->references('id')
+                  ->on('jadwal')
+                  ->onDelete('cascade');
 
-    $table->foreign('diverifikasi_oleh')
-          ->references('id')
-          ->on('users');
+            $table->foreign('diverifikasi_oleh')
+                  ->references('id')
+                  ->on('users')
+                  ->onDelete('set null');
 
-    $table->timestamps();
-});
+            $table->timestamps();
+        });
     }
 
     /**

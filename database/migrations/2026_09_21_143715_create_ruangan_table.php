@@ -14,8 +14,10 @@ return new class extends Migration
  Schema::create('ruangan', function (Blueprint $table) {
     $table->increments('id');
     $table->string('nama', 50);
-    $table->string('lokasi', 100);
-    $table->string('link_stream_cctv', 255);
+    $table->string('kode_ruangan', 20)->nullable();
+    $table->string('lokasi', 100)->nullable();
+    $table->string('link_stream_cctv', 255)->nullable();
+    $table->string('status_cctv', 20)->default('Online');
     $table->timestamps();
 });
     }
