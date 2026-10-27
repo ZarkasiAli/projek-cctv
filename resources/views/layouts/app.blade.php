@@ -17,6 +17,9 @@
         tailwind.config = {
             theme: {
                 extend: {
+                    spacing: {
+                        '68': '17rem',
+                    },
                     colors: {
                         navy: {
                             800: '#111d33',
@@ -48,7 +51,7 @@
             color: #0f172a;
         }
 
-        /* Custom Scrollbar */
+        /* Custom Scrollbar for Main Page */
         ::-webkit-scrollbar {
             width: 6px;
             height: 6px;
@@ -62,6 +65,35 @@
         }
         ::-webkit-scrollbar-thumb:hover {
             background: #94a3b8;
+        }
+
+        /* Dedicated Scrollbar for Sidebar Navigation */
+        .sidebar-scroll::-webkit-scrollbar {
+            width: 5px;
+        }
+        .sidebar-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .sidebar-scroll::-webkit-scrollbar-thumb {
+            background: rgba(148, 163, 184, 0.2);
+            border-radius: 9999px;
+        }
+        .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 0.4);
+        }
+        .sidebar-scroll {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(148, 163, 184, 0.2) transparent;
+        }
+
+        /* Explicit helper fallback for w-68 and lg:ml-68 */
+        .w-68 {
+            width: 17rem;
+        }
+        @media (min-width: 1024px) {
+            .lg\:ml-68 {
+                margin-left: 17rem;
+            }
         }
 
         /* Nav link transition */
@@ -97,11 +129,14 @@
         }
 
         @media print {
-            aside, header, .no-print {
+            aside, header, #sidebarBackdrop, .no-print {
                 display: none !important;
             }
             body {
                 background: white !important;
+            }
+            .lg\:ml-68 {
+                margin-left: 0 !important;
             }
             main {
                 padding: 0 !important;
@@ -109,119 +144,121 @@
         }
     </style>
 </head>
-<body class="bg-[#f8fafc] text-slate-800 antialiased min-h-screen flex selection:bg-blue-500 selection:text-white">
+<body class="bg-[#f8fafc] text-slate-800 antialiased min-h-screen selection:bg-blue-500 selection:text-white">
+
+    <!-- MOBILE SIDEBAR BACKDROP OVERLAY -->
+    <div id="sidebarBackdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-950/50 backdrop-blur-xs z-30 lg:hidden hidden transition-opacity"></div>
 
     <!-- LEFT SIDEBAR -->
-    <aside id="sidebar" class="w-68 bg-[#0b1628] text-slate-300 flex flex-col justify-between shrink-0 min-h-screen border-r border-slate-800/80 shadow-2xl z-30 transition-all duration-300">
-        <div class="flex flex-col">
-            <!-- BRAND LOGO -->
-            <div class="p-5 pb-4 flex items-center gap-3.5 border-b border-slate-800/80">
-                <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white shadow-lg shadow-blue-500/25 ring-2 ring-white/10 shrink-0">
-                    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 3L1 9L12 15L21 10.09V17H23V9M5 13.18V17.18L12 21L19 17.18V13.18L12 17L5 13.18Z"/>
-                    </svg>
-                </div>
-                <div class="overflow-hidden">
-                    <div class="flex items-center gap-1.5">
-                        <h1 class="font-extrabold text-white text-sm tracking-tight leading-tight">MONITORING</h1>
-                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-400/30">PRO</span>
-                    </div>
-                    <p class="text-xs font-semibold text-sky-400 tracking-wider uppercase">Kelas & CCTV</p>
-                </div>
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 lg:z-30 w-68 h-screen h-[100dvh] bg-[#0b1628] text-slate-300 flex flex-col border-r border-slate-800/80 shadow-2xl transition-all duration-300 hidden lg:flex">
+        
+        <!-- BRAND LOGO -->
+        <div class="p-5 pb-4 flex items-center gap-3.5 border-b border-slate-800/80 shrink-0">
+            <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white shadow-lg shadow-blue-500/25 ring-2 ring-white/10 shrink-0">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 3L1 9L12 15L21 10.09V17H23V9M5 13.18V17.18L12 21L19 17.18V13.18L12 17L5 13.18Z"/>
+                </svg>
             </div>
-
-            <!-- NAVIGATION MENU -->
-            <nav class="p-3.5 space-y-6 text-sm overflow-y-auto max-h-[calc(100vh-140px)]">
-                <!-- Group 1: Monitoring Utama -->
-                <div class="space-y-1">
-                    <span class="px-3 text-[11px] font-bold tracking-wider text-slate-400 uppercase">Menu Utama</span>
-                    
-                    <a href="{{ route('dashboard') }}" class="sidebar-item flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium {{ request()->routeIs('dashboard*') ? 'active' : 'text-slate-300' }}">
-                        <div class="flex items-center gap-3">
-                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
-                                <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
-                                <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
-                                <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
-                            </svg>
-                            <span>Dashboard</span>
-                        </div>
-                    </a>
-
-                    <a href="{{ route('cctv.index') }}" class="sidebar-item flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium {{ request()->routeIs('cctv*') ? 'active' : 'text-slate-300' }}">
-                        <div class="flex items-center gap-3">
-                            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                <polygon points="23 7 16 12 23 17 23 7"></polygon>
-                                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
-                            </svg>
-                            <span>Monitoring CCTV</span>
-                        </div>
-                        <span class="flex h-2 w-2 relative">
-                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                            <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-                        </span>
-                    </a>
+            <div class="overflow-hidden">
+                <div class="flex items-center gap-1.5">
+                    <h1 class="font-extrabold text-white text-sm tracking-tight leading-tight">MONITORING</h1>
+                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-400 border border-blue-400/30">PRO</span>
                 </div>
-
-                <!-- Group 2: Data Master -->
-                <div class="space-y-1">
-                    <span class="px-3 text-[11px] font-bold tracking-wider text-slate-400 uppercase">Master Data</span>
-                    
-                    <a href="{{ route('ruangan.index') }}" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium {{ request()->routeIs('ruangan*') ? 'active' : 'text-slate-300' }}">
-                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                        </svg>
-                        <span>Data Ruangan</span>
-                    </a>
-
-                    <a href="{{ route('dosen.index') }}" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium {{ request()->routeIs('dosen*') ? 'active' : 'text-slate-300' }}">
-                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                        </svg>
-                        <span>Dosen</span>
-                    </a>
-
-                    <a href="{{ route('mata-kuliah.index') }}" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium {{ request()->routeIs('mata-kuliah*') ? 'active' : 'text-slate-300' }}">
-                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-                        </svg>
-                        <span>Mata Kuliah</span>
-                    </a>
-
-                    <a href="{{ route('jadwal.index') }}" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium {{ request()->routeIs('jadwal*') ? 'active' : 'text-slate-300' }}">
-                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="16" y1="2" x2="16" y2="6"></line>
-                            <line x1="8" y1="2" x2="8" y2="6"></line>
-                            <line x1="3" y1="10" x2="21" y2="10"></line>
-                        </svg>
-                        <span>Jadwal Kuliah</span>
-                    </a>
-                </div>
-
-                <!-- Group 3: Operasional & Laporan -->
-                <div class="space-y-1">
-                    <span class="px-3 text-[11px] font-bold tracking-wider text-slate-400 uppercase">Operasional</span>
-                    
-                    <a href="{{ route('sesi.index') }}" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium {{ request()->routeIs('sesi*') ? 'active' : 'text-slate-300' }}">
-                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                        </svg>
-                        <span>Generate Sesi</span>
-                    </a>
-
-                    <a href="{{ route('report.index') }}" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium {{ request()->routeIs('report*') ? 'active' : 'text-slate-300' }}">
-                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                        <span>Laporan Rekap</span>
-                    </a>
-                </div>
-            </nav>
+                <p class="text-xs font-semibold text-sky-400 tracking-wider uppercase">Kelas & CCTV</p>
+            </div>
         </div>
 
+        <!-- NAVIGATION MENU -->
+        <nav class="sidebar-scroll flex-1 min-h-0 overflow-y-auto p-3.5 space-y-6 text-sm">
+            <!-- Group 1: Monitoring Utama -->
+            <div class="space-y-1">
+                <span class="px-3 text-[11px] font-bold tracking-wider text-slate-400 uppercase">Menu Utama</span>
+                
+                <a href="{{ route('dashboard') }}" class="sidebar-item flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium {{ request()->routeIs('dashboard*') ? 'active' : 'text-slate-300' }}">
+                    <div class="flex items-center gap-3">
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+                            <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+                            <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+                            <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+                        </svg>
+                        <span>Dashboard</span>
+                    </div>
+                </a>
+
+                <a href="{{ route('cctv.index') }}" class="sidebar-item flex items-center justify-between px-3.5 py-2.5 rounded-xl font-medium {{ request()->routeIs('cctv*') ? 'active' : 'text-slate-300' }}">
+                    <div class="flex items-center gap-3">
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                        </svg>
+                        <span>Monitoring CCTV</span>
+                    </div>
+                    <span class="flex h-2 w-2 relative">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+                    </span>
+                </a>
+            </div>
+
+            <!-- Group 2: Data Master -->
+            <div class="space-y-1">
+                <span class="px-3 text-[11px] font-bold tracking-wider text-slate-400 uppercase">Master Data</span>
+                
+                <a href="{{ route('ruangan.index') }}" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium {{ request()->routeIs('ruangan*') ? 'active' : 'text-slate-300' }}">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                    </svg>
+                    <span>Data Ruangan</span>
+                </a>
+
+                <a href="{{ route('dosen.index') }}" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium {{ request()->routeIs('dosen*') ? 'active' : 'text-slate-300' }}">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    <span>Dosen</span>
+                </a>
+
+                <a href="{{ route('mata-kuliah.index') }}" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium {{ request()->routeIs('mata-kuliah*') ? 'active' : 'text-slate-300' }}">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                    <span>Mata Kuliah</span>
+                </a>
+
+                <a href="{{ route('jadwal.index') }}" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium {{ request()->routeIs('jadwal*') ? 'active' : 'text-slate-300' }}">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <span>Jadwal Kuliah</span>
+                </a>
+            </div>
+
+            <!-- Group 3: Operasional & Laporan -->
+            <div class="space-y-1">
+                <span class="px-3 text-[11px] font-bold tracking-wider text-slate-400 uppercase">Operasional</span>
+                
+                <a href="{{ route('sesi.index') }}" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium {{ request()->routeIs('sesi*') ? 'active' : 'text-slate-300' }}">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    <span>Generate Sesi</span>
+                </a>
+
+                <a href="{{ route('report.index') }}" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-medium {{ request()->routeIs('report*') ? 'active' : 'text-slate-300' }}">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <span>Laporan Rekap</span>
+                </a>
+            </div>
+        </nav>
+
         <!-- USER FOOTER & LOGOUT -->
-        <div class="p-3.5 border-t border-slate-800/80 bg-slate-950/40">
+        <div class="p-3.5 border-t border-slate-800/80 bg-slate-950/40 shrink-0">
             <div class="flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-slate-800/60">
                 <div class="flex items-center gap-2.5 min-w-0">
                     <div class="w-8 h-8 rounded-lg bg-gradient-to-tr from-blue-600 to-sky-400 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm">
@@ -242,7 +279,7 @@
     </aside>
 
     <!-- MAIN CONTENT WRAPPER -->
-    <div class="flex-1 flex flex-col min-w-0 min-h-screen">
+    <div class="flex-1 flex flex-col min-w-0 min-h-screen lg:ml-68">
 
         <!-- TOP BAR -->
         <header class="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200/80 flex items-center justify-between px-6 sm:px-8 shrink-0 sticky top-0 z-20 shadow-xs">
@@ -403,7 +440,9 @@
 
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebarBackdrop');
             if (sidebar) sidebar.classList.toggle('hidden');
+            if (backdrop) backdrop.classList.toggle('hidden');
         }
 
         function openLogoutModal() {
