@@ -119,11 +119,16 @@
                                     <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
                                         {{ strtoupper(substr($item->nama, 0, 1)) }}
                                     </div>
-                                    <span class="font-bold text-slate-800">{{ $item->nama }}</span>
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-bold text-slate-800">{{ $item->nama }}</span>
+                                        @if($item->kode_dosen)
+                                            <span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-50 text-blue-600 border border-blue-200/60">{{ $item->kode_dosen }}</span>
+                                        @endif
+                                    </div>
                                 </div>
                             </td>
                             <td class="py-4 px-4 font-mono text-slate-600 font-medium text-xs">
-                                {{ $item->nip }}
+                                {{ $item->nip ?: '-' }}
                             </td>
                             <td class="py-4 px-4">
                                 @if($item->no_hp)

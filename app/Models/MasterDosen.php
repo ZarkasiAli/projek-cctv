@@ -12,6 +12,7 @@ class MasterDosen extends Model
     protected $table = 'master_dosen';
 
     protected $fillable = [
+        'kode_dosen',
         'nip',
         'nama',
         'no_hp',

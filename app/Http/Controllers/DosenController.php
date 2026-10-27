@@ -15,8 +15,9 @@ class DosenController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('nama', 'like', "%{$search}%")
-                  ->orWhere('nip', 'like', "%{$search}%")
-                  ->orWhere('no_hp', 'like', "%{$search}%");
+                    ->orWhere('kode_dosen', 'like', "%{$search}%")
+                    ->orWhere('nip', 'like', "%{$search}%")
+                    ->orWhere('no_hp', 'like', "%{$search}%");
             });
         }
 
@@ -37,7 +38,8 @@ class DosenController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'nip' => 'required|string|max:30|unique:master_dosen,nip',
+            'kode_dosen' => 'nullable|string|max:20',
+            'nip' => 'nullable|string|max:30',
             'nama' => 'required|string|max:100',
             'no_hp' => 'nullable|string|max:20',
             'status_aktif' => 'nullable|boolean',
@@ -55,7 +57,8 @@ class DosenController extends Controller
         $dosen = MasterDosen::findOrFail($id);
 
         $validated = $request->validate([
-            'nip' => 'required|string|max:30|unique:master_dosen,nip,' . $id,
+            'kode_dosen' => 'nullable|string|max:20',
+            'nip' => 'nullable|string|max:30',
             'nama' => 'required|string|max:100',
             'no_hp' => 'nullable|string|max:20',
             'status_aktif' => 'nullable|boolean',
@@ -71,10 +74,11 @@ class DosenController extends Controller
     public function toggleStatus($id)
     {
         $dosen = MasterDosen::findOrFail($id);
-        $dosen->status_aktif = !$dosen->status_aktif;
+        $dosen->status_aktif = ! $dosen->status_aktif;
         $dosen->save();
 
         $statusText = $dosen->status_aktif ? 'diaktifkan' : 'dinonaktifkan';
+
         return redirect()->route('dosen.index')->with('success', "Status dosen {$dosen->nama} berhasil {$statusText}!");
     }
 
