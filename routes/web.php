@@ -9,6 +9,7 @@ use App\Http\Controllers\MataKuliahController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RuanganController;
 use App\Http\Controllers\SesiKelasController;
+use App\Http\Controllers\Auth\GoogleController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -19,6 +20,10 @@ Route::get('/', function () {
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.post');
 Route::match(['get', 'post'], '/logout', [AuthController::class, 'logout'])->name('logout');
+
+// Rute Login Google SSO
+Route::get('/auth/google', [GoogleController::class, 'redirectToGoogle'])->name('google.login');
+Route::get('/auth/google/callback', [GoogleController::class, 'handleGoogleCallback']);
 
 // Main Application Routes
 Route::middleware(['web'])->group(function () {

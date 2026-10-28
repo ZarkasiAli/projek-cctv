@@ -73,7 +73,7 @@
 
                         <!-- Bottom Info -->
                         <div class="absolute bottom-3 inset-x-3 flex items-center justify-between text-white text-xs">
-                            <span class="font-bold text-xs truncate drop-shadow-sm">{{ $r->kode_ruangan ?? ('R' . $r->id) }} - {{ $r->nama }}</span>
+                            <span class="font-bold text-xs truncate drop-shadow-sm">{{ $r->kode_ruangan ?? ('R' . $r->id) }} {{ $r->nama }}</span>
                             <a href="{{ route('cctv.index', ['ruangan_id' => $r->id, 'mode' => 'single']) }}" class="px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-[11px] transition-colors shadow-sm">
                                 Perbesar
                             </a>
@@ -143,7 +143,7 @@
                     <div class="absolute bottom-4 left-4 z-10">
                         <div class="px-3.5 py-2 rounded-xl bg-black/80 backdrop-blur-md text-white text-xs font-mono font-bold border border-white/15 flex items-center gap-2.5 shadow-lg">
                             <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                            <span>{{ $selectedRoom->kode_ruangan ?? ('R' . ($selectedRoom->id ?? 1)) }} - {{ $selectedRoom->nama ?? 'Ruangan' }} ({{ $selectedRoom->lokasi ?? '' }})</span>
+                            <span>{{ $selectedRoom->kode_ruangan ?? ('R' . ($selectedRoom->id ?? 1)) }} {{ $selectedRoom->nama ?? 'Ruangan' }} ({{ $selectedRoom->lokasi ?? '' }})</span>
                         </div>
                     </div>
 
@@ -191,7 +191,7 @@
                         <!-- Prodi & Kelas -->
                         <div class="flex items-center justify-between py-1 border-b border-slate-100">
                             <span class="text-slate-400 font-medium">Prodi & Kelas</span>
-                            <span class="font-bold text-slate-800">{{ $activeJadwal->prodi }} - {{ $activeJadwal->kelas }}</span>
+                            <span class="font-bold text-slate-800">{{ $activeJadwal->prodi }} {{ $activeJadwal->kelas }}</span>
                         </div>
 
                         <!-- Jam Ke & Jam Waktu -->
@@ -247,65 +247,68 @@
 
                     @if($sesi && $sesi->status_verifikasi === 'terverifikasi')
                         <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-semibold">
-                            <span>✓ Telah diverifikasi oleh <strong>{{ $sesi->verifikator->nama ?? 'Admin' }}</strong></span>
+                            <span>✓ Telah diverifikasi</span>
                         </div>
                     @endif
                 </div>
 
-                <form action="{{ route('cctv.verifikasi') }}" method="POST" class="space-y-4">
-                    @csrf
-                    
-                    <input type="hidden" name="jadwal_id" value="{{ $activeJadwal->id }}">
-                    @if($sesi)
-                        <input type="hidden" name="sesi_id" value="{{ $sesi->id }}">
-                    @endif
+                <!-- Form hanya muncul JIKA sesi belum ada atau belum terverifikasi -->
+                @if(!$sesi || $sesi->status_verifikasi !== 'terverifikasi')
+                    <form action="{{ route('cctv.verifikasi') }}" method="POST" class="space-y-4">
+                        @csrf
+                        
+                        <input type="hidden" name="jadwal_id" value="{{ $activeJadwal->id }}">
+                        @if($sesi)
+                            <input type="hidden" name="sesi_id" value="{{ $sesi->id }}">
+                        @endif
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- Petugas Verifikator -->
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Petugas Verifikator</label>
-                            <div class="relative">
-                                <select name="user_id" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none">
-                                    @foreach($allUsers as $u)
-                                        <option value="{{ $u->id }}" {{ (auth()->id() == $u->id) ? 'selected' : '' }}>
-                                            {{ $u->nama }} ({{ $u->role }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-slate-400">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                                    </svg>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Petugas Verifikator -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Petugas Verifikator</label>
+                                <div class="relative">
+                                    <select name="user_id" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 appearance-none">
+                                        @foreach($allUsers as $u)
+                                            <option value="{{ $u->id }}" {{ (auth()->id() == $u->id) ? 'selected' : '' }}>
+                                                {{ $u->nama }} ({{ $u->role }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-slate-400">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                        </svg>
+                                    </div>
                                 </div>
+                            </div>
+
+                            <!-- Catatan Pemantauan -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Catatan Pemantauan Visual</label>
+                                <input 
+                                    type="text" 
+                                    name="catatan" 
+                                    value="Kelas berjalan tertib dan sesuai jadwal perkuliahan" 
+                                    class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                    placeholder="Masukkan catatan observasi CCTV..."
+                                >
                             </div>
                         </div>
 
-                        <!-- Catatan Pemantauan -->
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Catatan Pemantauan Visual</label>
-                            <input 
-                                type="text" 
-                                name="catatan" 
-                                value="Kelas berjalan tertib dan sesuai jadwal perkuliahan" 
-                                class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                                placeholder="Masukkan catatan observasi CCTV..."
+                        <!-- Action Button -->
+                        <div class="pt-2">
+                            <button 
+                                type="submit" 
+                                class="w-full py-3.5 px-6 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl text-xs sm:text-sm shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5"
                             >
+                                <svg class="w-5 h-5 text-blue-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span>Verifikasi Kelas Berjalan Sekarang</span>
+                            </button>
                         </div>
-                    </div>
-
-                    <!-- Action Button -->
-                    <div class="pt-2">
-                        <button 
-                            type="submit" 
-                            class="w-full py-3.5 px-6 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-2xl text-xs sm:text-sm shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2 hover:-translate-y-0.5"
-                        >
-                            <svg class="w-5 h-5 text-blue-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <span>Verifikasi Kelas Berjalan Sekarang</span>
-                        </button>
-                    </div>
-                </form>
+                    </form>
+                @endif
             </div>
         @endif
     @endif
