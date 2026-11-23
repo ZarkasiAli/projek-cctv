@@ -20,6 +20,23 @@ class User extends Authenticatable
         'google_id',
     ];
 
+    public function isSuperAdmin(): bool
+    {
+        $role = strtolower(trim((string) $this->role));
+        return in_array($role, ['superadmin', 'super admin', 'super_admin']);
+    }
+
+    public function isAdmin(): bool
+    {
+        $role = strtolower(trim((string) $this->role));
+        return in_array($role, ['admin', 'superadmin', 'super admin', 'super_admin']);
+    }
+
+    public function isManajemen(): bool
+    {
+        return strtolower(trim((string) $this->role)) === 'manajemen';
+    }
+
     protected $hidden = [
         'password',
         'remember_token',

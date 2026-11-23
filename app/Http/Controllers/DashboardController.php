@@ -37,7 +37,7 @@ class DashboardController extends Controller
         return "{$dayName}, {$date->format('d')} {$months[$date->month]} {$date->format('Y')}";
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $now = now();
         $currentTime = $now->format('H:i:s');
@@ -45,58 +45,106 @@ class DashboardController extends Controller
         $todayDate = $now->format('Y-m-d');
         $formattedDate = $this->getIndonesianDate($now);
 
-        $ruanganList = Ruangan::all();
-        $totalRuangan = $ruanganList->count();
+        // Get sorted unique list of floors
+        $daftarLantai = Ruangan::whereNotNull('lokasi')
+            ->where('lokasi', '!=', '')
+            ->pluck('lokasi')
+            ->unique()
+            ->sort(function ($a, $b) {
+                preg_match('/\d+/', $a, $mA);
+                preg_match('/\d+/', $b, $mB);
+                $numA = isset($mA[0]) ? (int) $mA[0] : 0;
+                $numB = isset($mB[0]) ? (int) $mB[0] : 0;
+                if ($numA === $numB) {
+                    return strcmp($a, $b);
+                }
+                return $numA <=> $numB;
+            })
+            ->values();
+
+        $selectedLantai = $request->query('lantai');
+
+        $allRuangan = Ruangan::all();
+        $totalRuangan = $allRuangan->count();
         $totalDosen = MasterDosen::where('status_aktif', 1)->count();
         $totalMataKuliah = MasterMataKuliah::count();
 
-        // Find active schedules based on server time vs current day schedule
-        $activeJadwal = Jadwal::with(['ruangan', 'dosen', 'mataKuliah'])
+        // Floor-filtered rooms for occupancy status matrix
+        $ruanganList = $allRuangan;
+        if ($request->filled('lantai') && $request->lantai !== 'all') {
+            $ruanganList = $allRuangan->filter(function ($r) use ($selectedLantai) {
+                return stripos($r->lokasi ?? '', $selectedLantai) !== false;
+            });
+        }
+
+        // 1. Ongoing schedules right now
+        $activeJadwal = Jadwal::with(['ruangan', 'dosen', 'mataKuliah', 'sesiKelas' => function ($q) use ($todayDate) {
+                $q->whereDate('tanggal', $todayDate);
+            }])
             ->where('hari', $currentHari)
             ->where('jam_mulai', '<=', $currentTime)
             ->where('jam_selesai', '>=', $currentTime)
             ->get();
 
-        // If currently no live classes (e.g. outside class hours), show today's schedule or all active schedules
-        $displayJadwal = Jadwal::with(['ruangan', 'dosen', 'mataKuliah'])
+        // 2. Verified sessions for ongoing classes right now (jam_mulai <= currentTime <= jam_selesai)
+        $verifiedSessionsToday = SesiKelas::with(['jadwal.ruangan', 'jadwal.dosen', 'jadwal.mataKuliah'])
+            ->whereDate('tanggal', $todayDate)
+            ->where('status_verifikasi', 'terverifikasi')
+            ->whereHas('jadwal', function ($q) use ($currentHari, $currentTime) {
+                $q->where('hari', $currentHari)
+                    ->where('jam_mulai', '<=', $currentTime)
+                    ->where('jam_selesai', '>=', $currentTime);
+            })
+            ->get();
+
+        $verifiedRoomIds = $verifiedSessionsToday->pluck('jadwal.ruangan_id')->filter()->unique()->toArray();
+
+        // 3. Display schedules (hanya kelas yang sedang berlangsung saat ini)
+        $displayJadwal = Jadwal::with(['ruangan', 'dosen', 'mataKuliah', 'sesiKelas' => function ($q) use ($todayDate) {
+                $q->whereDate('tanggal', $todayDate);
+            }])
             ->where('hari', $currentHari)
+            ->where('jam_mulai', '<=', $currentTime)
+            ->where('jam_selesai', '>=', $currentTime)
             ->orderBy('jam_mulai', 'asc')
             ->get();
 
-        if ($displayJadwal->isEmpty()) {
-            // Fallback to top schedules so the UI remains populated and demonstrative
-            $displayJadwal = Jadwal::with(['ruangan', 'dosen', 'mataKuliah'])
-                ->orderByRaw("FIELD(hari, 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu')")
-                ->orderBy('jam_mulai', 'asc')
-                ->take(6)
-                ->get();
-        }
-
-        $activeRoomIds = $activeJadwal->pluck('ruangan_id')->toArray();
-        if (empty($activeRoomIds) && $displayJadwal->isNotEmpty()) {
-            // If checking during off-hours, mark rooms with current day schedule
-            $activeRoomIds = $displayJadwal->pluck('ruangan_id')->unique()->take(2)->toArray();
-        }
+        // Active room IDs = ongoing right now OR verified right now
+        $activeRoomIds = array_unique(array_merge(
+            $activeJadwal->pluck('ruangan_id')->toArray(),
+            $verifiedRoomIds
+        ));
 
         $kelasAktifCount = count($activeRoomIds);
         $ruanganKosongCount = max(0, $totalRuangan - $kelasAktifCount);
 
-        // Room status matrix
-        $statusRuangan = $ruanganList->map(function ($r) use ($activeRoomIds, $currentHari, $currentTime) {
-            $isUsed = in_array($r->id, $activeRoomIds);
-            
-            // Find active or next lecture in this room
-            $activeInRoom = Jadwal::with(['dosen', 'mataKuliah'])
-                ->where('ruangan_id', $r->id)
-                ->where('hari', $currentHari)
-                ->where('jam_mulai', '<=', $currentTime)
-                ->where('jam_selesai', '>=', $currentTime)
-                ->first();
+        // Room status matrix: HANYA tampilkan kelas yang sedang berlangsung (tidak menampilkan kelas/ruangan tidak terjadwal)
+        $statusRuangan = $ruanganList->map(function ($r) use ($activeJadwal, $verifiedSessionsToday) {
+            // Check verified session for this room right now
+            $verifiedSession = $verifiedSessionsToday->first(function ($session) use ($r) {
+                return $session->jadwal && $session->jadwal->ruangan_id == $r->id;
+            });
 
-            if (!$activeInRoom) {
-                $activeInRoom = Jadwal::with(['dosen', 'mataKuliah'])
-                    ->where('ruangan_id', $r->id)
-                    ->first();
+            // Check ongoing class right now
+            $ongoingLecture = $activeJadwal->firstWhere('ruangan_id', $r->id);
+
+            $isVerified = ($verifiedSession !== null);
+            $isOngoing = (!$isVerified && $ongoingLecture !== null);
+            $isUsed = ($isVerified || $isOngoing);
+
+            // Lecture to display: hanya tampil jika sesuai jamnya sekarang
+            $lectureToShow = null;
+            if ($isVerified && $verifiedSession->jadwal) {
+                $lectureToShow = $verifiedSession->jadwal;
+            } elseif ($isOngoing) {
+                $lectureToShow = $ongoingLecture;
+            }
+
+            $statusText = 'Kosong';
+            if ($isVerified) {
+                $statusText = 'Terverifikasi';
+            } elseif ($isOngoing) {
+                $statusText = 'Sedang Digunakan';
             }
 
             return [
@@ -106,10 +154,19 @@ class DashboardController extends Controller
                 'lokasi' => $r->lokasi,
                 'link_stream_cctv' => $r->link_stream_cctv,
                 'is_used' => $isUsed,
-                'status' => $isUsed ? 'Sedang Digunakan' : 'Kosong',
-                'active_lecture' => $activeInRoom,
+                'is_verified' => $isVerified,
+                'is_ongoing' => $isOngoing,
+                'is_upcoming' => false,
+                'status' => $statusText,
+                'active_lecture' => $lectureToShow,
+                'verified_session' => $verifiedSession,
             ];
-        });
+        })
+        ->filter(function ($r) {
+            // Hanya tampilkan kelas yang sedang berlangsung (filter out kelas tidak terjadwal/kosong)
+            return $r['is_used'] && $r['active_lecture'] !== null;
+        })
+        ->values();
 
         // Verification stats for today
         $todaySessionsCount = SesiKelas::whereDate('tanggal', $todayDate)->count();
@@ -127,7 +184,9 @@ class DashboardController extends Controller
             'displayJadwal',
             'statusRuangan',
             'todaySessionsCount',
-            'verifiedTodayCount'
+            'verifiedTodayCount',
+            'daftarLantai',
+            'selectedLantai'
         ));
     }
 
@@ -136,6 +195,7 @@ class DashboardController extends Controller
         $now = now();
         $currentTime = $now->format('H:i:s');
         $currentHari = $this->getIndonesianDay($now->format('l'));
+        $todayDate = $now->format('Y-m-d');
 
         $ruanganList = Ruangan::all();
         $totalRuangan = $ruanganList->count();
@@ -145,7 +205,19 @@ class DashboardController extends Controller
             ->where('jam_selesai', '>=', $currentTime)
             ->get();
 
-        $activeRoomIds = $activeJadwal->pluck('ruangan_id')->toArray();
+        $verifiedRoomIds = Jadwal::whereIn('id', function ($query) use ($todayDate) {
+                $query->select('jadwal_id')
+                    ->from('sesi_kelas')
+                    ->whereDate('tanggal', $todayDate)
+                    ->where('status_verifikasi', 'terverifikasi');
+            })
+            ->where('hari', $currentHari)
+            ->where('jam_mulai', '<=', $currentTime)
+            ->where('jam_selesai', '>=', $currentTime)
+            ->pluck('ruangan_id')
+            ->toArray();
+
+        $activeRoomIds = array_unique(array_merge($activeJadwal->pluck('ruangan_id')->toArray(), $verifiedRoomIds));
         $kelasAktifCount = count($activeRoomIds);
         $ruanganKosongCount = max(0, $totalRuangan - $kelasAktifCount);
 

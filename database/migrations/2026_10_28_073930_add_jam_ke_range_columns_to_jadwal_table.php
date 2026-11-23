@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('jadwal', function (Blueprint $table) {
-            $table->unsignedInteger('jam_ke_mulai')->after('jam_ke');
-            $table->unsignedInteger('jam_ke_selesai')->after('jam_ke_mulai');
+            if (! Schema::hasColumn('jadwal', 'jam_ke_mulai')) {
+                $table->unsignedInteger('jam_ke_mulai')->nullable()->after('hari');
+            }
+            if (! Schema::hasColumn('jadwal', 'jam_ke_selesai')) {
+                $table->unsignedInteger('jam_ke_selesai')->nullable()->after('jam_ke_mulai');
+            }
         });
     }
 

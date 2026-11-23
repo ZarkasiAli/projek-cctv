@@ -40,7 +40,7 @@
 
     <!-- STAT CARDS -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-        
+
         <!-- Card 1: Waktu Server -->
         <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex items-center gap-4 transition-all hover:shadow-md hover:-translate-y-0.5">
             <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
@@ -105,13 +105,13 @@
     <div class="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
             <div>
-                <h3 class="text-base font-extrabold text-slate-900 tracking-tight">Status Okupansi Ruangan</h3>
-                <p class="text-xs text-slate-400">Status real-time setiap ruangan berdasarkan jadwal dan pemantauan CCTV.</p>
+                <h3 class="text-base font-extrabold text-slate-900 tracking-tight">Kelas yang Sedang Berlangsung (Real-Time)</h3>
+                <p class="text-xs text-slate-400">Hanya menampilkan ruangan dengan perkuliahan yang sedang berjalan aktif saat ini.</p>
             </div>
-            <div class="flex items-center gap-4 text-xs font-semibold">
+            <div class="flex flex-wrap items-center gap-3 text-xs font-semibold">
                 <span class="flex items-center gap-1.5 text-emerald-700">
                     <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-live-dot"></span>
-                    <span>Sedang Digunakan ({{ $kelasAktifCount }})</span>
+                    <span>Aktif / Terverifikasi ({{ $kelasAktifCount }})</span>
                 </span>
                 <span class="flex items-center gap-1.5 text-slate-500">
                     <span class="w-2.5 h-2.5 rounded-full bg-slate-300"></span>
@@ -120,12 +120,69 @@
             </div>
         </div>
 
+        <!-- Filter Lantai Tab Pills (Item 1: Filter Ruangan Berdasarkan Lantai) -->
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M3 21h18M3 7v14m18-14v14M6 11h2m-2 4h2m8-4h2m-2 4h2M9 3l3-2 3 2v4H9V3z"/>
+                </svg>
+                Lantai:
+            </span>
+            <a
+                href="{{ route('dashboard') }}"
+                class="px-3 py-1.5 rounded-xl font-bold transition-all shrink-0 {{ !$selectedLantai ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}"
+            >
+                Semua Lantai ({{ $statusRuangan->count() }} Kelas Aktif)
+            </a>
+            @foreach($daftarLantai as $lt)
+                <a
+                    href="{{ route('dashboard', ['lantai' => $lt]) }}"
+                    class="px-3 py-1.5 rounded-xl font-bold transition-all shrink-0 {{ $selectedLantai === $lt ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}"
+                >
+                    🏢 {{ $lt }}
+                </a>
+            @endforeach
+            @if($selectedLantai)
+                <a
+                    href="{{ route('dashboard') }}"
+                    class="px-2.5 py-1 rounded-lg text-xs font-semibold text-rose-600 hover:text-rose-800 hover:bg-rose-50 transition-colors ml-1"
+                >
+                    ✕ Reset
+                </a>
+            @endif
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pt-1">
             @forelse($statusRuangan as $r)
-                <div class="rounded-2xl p-4 border transition-all hover:shadow-md {{ $r['is_used'] ? 'bg-gradient-to-br from-emerald-50/50 to-white border-emerald-200' : 'bg-slate-50/60 border-slate-200/80' }}">
+                @php
+                    $isVerified = $r['is_verified'] ?? false;
+                    $isOngoing = $r['is_ongoing'] ?? false;
+                    $isUpcoming = $r['is_upcoming'] ?? false;
+                    $isUsed = $r['is_used'] ?? false;
+
+                    // Color scheme:
+                    // If verified: Vibrant emerald/green!
+                    // If ongoing (not verified yet): Blue / Amber
+                    // If upcoming: Slate with blue border
+                    // If empty: Neutral slate
+                    if ($isVerified) {
+                        $cardClass = 'bg-gradient-to-br from-emerald-100/70 via-emerald-50/40 to-white border-2 border-emerald-500 ring-2 ring-emerald-500/20 shadow-md';
+                        $codeClass = 'bg-emerald-600 text-white shadow-xs';
+                    } elseif ($isOngoing) {
+                        $cardClass = 'bg-gradient-to-br from-blue-50/50 via-sky-50/20 to-white border-blue-300 ring-1 ring-blue-400/20 shadow-xs';
+                        $codeClass = 'bg-blue-600 text-white shadow-xs';
+                    } elseif ($isUpcoming) {
+                        $cardClass = 'bg-slate-50/80 border-slate-200 hover:border-slate-300';
+                        $codeClass = 'bg-slate-200 text-slate-700';
+                    } else {
+                        $cardClass = 'bg-slate-50/60 border-slate-200/80';
+                        $codeClass = 'bg-slate-200 text-slate-700';
+                    }
+                @endphp
+                <div class="rounded-2xl p-4 border transition-all hover:shadow-md {{ $cardClass }}" @if($r['active_lecture']) data-jam-selesai="{{ $r['active_lecture']->jam_selesai }}" @endif>
                     <div class="flex items-start justify-between gap-2 mb-3">
                         <div class="flex items-center gap-2.5">
-                            <span class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold {{ $r['is_used'] ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700' }}">
+                            <span class="px-2.5 py-1 rounded-lg text-xs font-mono font-bold {{ $codeClass }}">
                                 {{ $r['kode'] }}
                             </span>
                             <div>
@@ -134,10 +191,22 @@
                             </div>
                         </div>
 
-                        @if($r['is_used'])
-                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                <span>Aktif</span>
+                        <!-- Badge Status Okupansi -->
+                        @if($isVerified)
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-extrabold bg-emerald-600 text-white shadow-xs">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                                <span>Terverifikasi</span>
+                            </span>
+                        @elseif($isOngoing)
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                                <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                                <span>Sedang Berlangsung</span>
+                            </span>
+                        @elseif($isUpcoming)
+                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                                <span>Akan Datang</span>
                             </span>
                         @else
                             <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-slate-200/70 text-slate-600">
@@ -147,15 +216,39 @@
                     </div>
 
                     @if($r['active_lecture'])
-                        <div class="p-3 rounded-xl bg-white/90 border border-slate-100 space-y-1.5 text-xs mb-3 shadow-2xs">
+                        <div class="p-3 rounded-xl {{ $isVerified ? 'bg-emerald-50/90 border border-emerald-200 ring-1 ring-emerald-300/40' : 'bg-white/90 border border-slate-100' }} space-y-1.5 text-xs mb-3 shadow-2xs">
                             <div class="flex items-center justify-between">
-                                <span class="font-bold text-slate-800 truncate">{{ $r['active_lecture']->mataKuliah->nama_mata_kuliah ?? 'Mata Kuliah' }}</span>
-                                <span class="font-mono text-[10px] font-semibold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded">{{ $r['active_lecture']->jam_range }}</span>
+                                <span class="font-bold truncate {{ $isVerified ? 'text-emerald-950 font-extrabold' : 'text-slate-800' }}">
+                                    {{ $r['active_lecture']->mataKuliah->nama_mata_kuliah ?? 'Mata Kuliah' }}
+                                </span>
+                                <span class="font-mono text-[10px] font-semibold {{ $isVerified ? 'text-emerald-700 bg-emerald-100/80 border border-emerald-200' : 'text-blue-600 bg-blue-50' }} px-1.5 py-0.5 rounded">
+                                    {{ $r['active_lecture']->jam_range }}
+                                </span>
                             </div>
                             <div class="flex items-center justify-between text-[11px] text-slate-500">
                                 <span class="truncate">Dosen: {{ $r['active_lecture']->dosen->nama ?? '-' }}</span>
                                 <span class="font-medium text-slate-600">{{ $r['active_lecture']->kelas }}</span>
                             </div>
+
+                            @if($isVerified)
+                                <div class="pt-1.5 border-t border-emerald-200/60 flex items-center justify-between text-[10px] text-emerald-800 font-bold">
+                                    <span class="inline-flex items-center gap-1">
+                                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                        </svg>
+                                        Hadir & Berjalan Sesuai Jadwal
+                                    </span>
+                                    @if($r['verified_session'] && $r['verified_session']->diverifikasi_pada)
+                                        <span class="font-mono text-[9px] text-emerald-700 font-semibold">
+                                            {{ \Carbon\Carbon::parse($r['verified_session']->diverifikasi_pada)->format('H:i') }} WIB
+                                        </span>
+                                    @endif
+                                </div>
+                            @elseif($isUpcoming)
+                                <div class="pt-1 text-[10px] text-amber-700 font-semibold flex items-center gap-1">
+                                    <span>⏱️ Kelas berikutnya hari ini</span>
+                                </div>
+                            @endif
                         </div>
                     @else
                         <div class="p-3 rounded-xl bg-white/50 border border-dashed border-slate-200 text-center text-xs text-slate-400 mb-3">
@@ -174,8 +267,17 @@
                     </div>
                 </div>
             @empty
-                <div class="col-span-3 text-center py-8 text-slate-400 text-xs">
-                    Belum ada data ruangan yang terdaftar.
+                <div class="col-span-1 md:col-span-2 lg:col-span-3 text-center py-12 px-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50/50">
+                    <div class="flex flex-col items-center justify-center gap-2">
+                        <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 14 14"></polyline>
+                            </svg>
+                        </div>
+                        <p class="font-bold text-slate-700 text-sm">Tidak ada kelas yang sedang berlangsung saat ini{{ $selectedLantai ? ' di ' . $selectedLantai : '' }}.</p>
+                        <p class="text-xs text-slate-400">Ruangan tanpa jadwal perkuliahan aktif saat ini tidak ditampilkan.</p>
+                    </div>
                 </div>
             @endforelse
         </div>
@@ -185,8 +287,8 @@
     <div class="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs space-y-5">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-                <h3 class="text-base font-extrabold text-slate-900 tracking-tight">Daftar Jadwal Kuliah Hari Ini & Aktif</h3>
-                <p class="text-xs text-slate-400">Sinkronisasi langsung dengan tabel jadwal dan master dosen/mata kuliah.</p>
+                <h3 class="text-base font-extrabold text-slate-900 tracking-tight">Daftar Jadwal Kuliah yang Sedang Berlangsung</h3>
+                <p class="text-xs text-slate-400">Menampilkan mata kuliah yang sedang berjalan secara real-time pada jam sekarang.</p>
             </div>
             <a href="{{ route('jadwal.index') }}" class="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1">
                 <span>Kelola Semua Jadwal</span>
@@ -205,12 +307,17 @@
                         <th class="pb-3 px-4">Dosen Pengampu</th>
                         <th class="pb-3 px-3">Ruangan</th>
                         <th class="pb-3 px-3">Prodi & Kelas</th>
+                        <th class="pb-3 px-3 text-center">Status Verifikasi</th>
                         <th class="pb-3 px-3 text-center">CCTV</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 text-slate-700">
                     @forelse($displayJadwal as $jadwal)
-                        <tr class="hover:bg-slate-50/80 transition-colors">
+                        @php
+                            $sesiHariIni = $jadwal->sesiKelas->first();
+                            $isJadwalVerified = $sesiHariIni && $sesiHariIni->status_verifikasi === 'terverifikasi';
+                        @endphp
+                        <tr class="hover:bg-slate-50/80 transition-colors {{ $isJadwalVerified ? 'bg-emerald-50/30' : '' }}" data-jam-selesai="{{ $jadwal->jam_selesai }}">
                             <td class="py-3.5 px-3">
                                 <div class="font-mono font-bold text-slate-800 text-xs">{{ $jadwal->jam_range }}</div>
                                 <div class="text-[10px] text-blue-600 font-medium">{{ $jadwal->jam_ke_range }} ({{ $jadwal->hari }})</div>
@@ -235,6 +342,20 @@
                                 </span>
                             </td>
                             <td class="py-3.5 px-3 text-center">
+                                @if($isJadwalVerified)
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <span>Terverifikasi</span>
+                                    </span>
+                                @else
+                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                                        <span>Belum Verifikasi</span>
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="py-3.5 px-3 text-center">
                                 <a href="{{ route('cctv.index', ['ruangan_id' => $jadwal->ruangan_id]) }}" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs transition-colors">
                                     <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                         <polygon points="23 7 16 12 23 17 23 7"></polygon>
@@ -246,8 +367,15 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="py-10 text-center text-slate-400 text-xs">
-                                Belum ada data jadwal perkuliahan aktif.
+                            <td colspan="7" class="py-12 text-center text-slate-400 text-xs">
+                                <div class="flex flex-col items-center justify-center gap-2">
+                                    <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <polyline points="12 6 12 12 14 14"></polyline>
+                                    </svg>
+                                    <p class="font-bold text-slate-600">Tidak ada perkuliahan aktif atau jadwal tersisa untuk hari ini.</p>
+                                    <p class="text-[11px] text-slate-400">Jadwal yang jamnya telah selesai otomatis tidak ditampilkan.</p>
+                                </div>
                             </td>
                         </tr>
                     @endforelse
@@ -257,4 +385,28 @@
     </div>
 
 </div>
+
+@push('scripts')
+<script>
+    // Auto-check every 30 seconds for live status & automatic dismissal of past classes
+    setInterval(function() {
+        const now = new Date();
+        const curTimeStr = String(now.getHours()).padStart(2, '0') + ':' +
+                           String(now.getMinutes()).padStart(2, '0') + ':' +
+                           String(now.getSeconds()).padStart(2, '0');
+
+        let hasExpiredClass = false;
+        document.querySelectorAll('[data-jam-selesai]').forEach(function(el) {
+            const jamSelesai = el.getAttribute('data-jam-selesai');
+            if (jamSelesai && jamSelesai <= curTimeStr) {
+                hasExpiredClass = true;
+            }
+        });
+
+        if (hasExpiredClass) {
+            window.location.reload();
+        }
+    }, 30000);
+</script>
+@endpush
 @endsection

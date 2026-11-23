@@ -20,10 +20,35 @@ class RuanganController extends Controller
             });
         }
 
+        if ($request->filled('lantai') && $request->lantai !== 'all') {
+            $lantai = $request->lantai;
+            $query->where(function ($q) use ($lantai) {
+                $q->where('lokasi', $lantai)
+                  ->orWhere('lokasi', 'like', "%{$lantai}%");
+            });
+        }
+
         $ruangan = $query->orderBy('id', 'asc')->paginate(10)->withQueryString();
         $totalRuangan = Ruangan::count();
 
-        return view('ruangan.index', compact('ruangan', 'totalRuangan'));
+        // Get sorted unique list of floors
+        $daftarLantai = Ruangan::whereNotNull('lokasi')
+            ->where('lokasi', '!=', '')
+            ->pluck('lokasi')
+            ->unique()
+            ->sort(function ($a, $b) {
+                preg_match('/\d+/', $a, $mA);
+                preg_match('/\d+/', $b, $mB);
+                $numA = isset($mA[0]) ? (int) $mA[0] : 0;
+                $numB = isset($mB[0]) ? (int) $mB[0] : 0;
+                if ($numA === $numB) {
+                    return strcmp($a, $b);
+                }
+                return $numA <=> $numB;
+            })
+            ->values();
+
+        return view('ruangan.index', compact('ruangan', 'totalRuangan', 'daftarLantai'));
     }
 
     public function store(Request $request)

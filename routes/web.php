@@ -9,6 +9,7 @@ use App\Http\Controllers\MataKuliahController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RuanganController;
 use App\Http\Controllers\SesiKelasController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\Auth\GoogleController;
 use Illuminate\Support\Facades\Route;
 
@@ -63,6 +64,14 @@ Route::middleware(['web'])->group(function () {
     // Monitoring CCTV
     Route::get('/cctv', [CctvController::class, 'index'])->name('cctv.index');
     Route::post('/cctv/verifikasi', [CctvController::class, 'verifikasi'])->name('cctv.verifikasi');
+
+    // User Management (Khusus Super Admin)
+    Route::middleware(['superadmin'])->group(function () {
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::post('/users', [UserController::class, 'store'])->name('users.store');
+        Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+    });
 
     // Report
     Route::get('/report', [ReportController::class, 'index'])->name('report.index');

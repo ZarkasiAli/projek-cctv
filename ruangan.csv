@@ -35,7 +35,7 @@ id,kode_ruangan,nama,lokasi,link_stream_cctv,created_at,updated_at
 37,,Innovation Hub,,,,
 38,,S2 Teori,,,,
 39,,S2 Lab,,,,
-40,0201,Lab. AI,Lantai 2,https://apps.jti.polinema.ac.id/cctv/hls/c155d328d/index.m3u8,,
+40,0201,Lab. AI,Lantai 2,https://apps.jti.polinema.ac.id/cctv//hls/c155d328d/index.m3u8,,
 41,0500,Lobby 5,Lantai 5,https://apps.jti.polinema.ac.id/cctv/hls/c5a767a4d/index.m3u8,,
 42,0510,R. Teknisi,Lantai 5,https://apps.jti.polinema.ac.id/cctv/hls/c40569cf3/index.m3u8,,
 43,0600,Lobby 6,Lantai 6,https://apps.jti.polinema.ac.id/cctv/hls/cbf8eba0d/index.m3u8,,

@@ -23,29 +23,79 @@
 
     <!-- TABLE CARD -->
     <div class="bg-white rounded-3xl p-6 sm:p-7 border border-slate-200/80 shadow-xs space-y-5">
-        
-        <!-- Search and count bar -->
-        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pb-1">
-            <form action="{{ route('ruangan.index') }}" method="GET" class="w-full sm:w-80">
-                <div class="relative">
-                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <circle cx="11" cy="11" r="8" stroke-width="2"></circle>
-                            <line x1="21" y1="21" x2="16.65" y2="16.65" stroke-width="2"></line>
-                        </svg>
-                    </span>
-                    <input 
-                        type="text" 
-                        name="search" 
-                        value="{{ request('search') }}" 
-                        placeholder="Cari nama, kode (R101), atau lokasi..." 
-                        class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
-                    >
-                </div>
-            </form>
 
-            <div class="text-xs text-slate-500 font-medium">
-                Total: <span class="font-bold text-slate-800">{{ $totalRuangan }}</span> Ruangan Terdaftar
+        <!-- Search, Floor Filter, and count bar -->
+        <div class="space-y-3 pb-1">
+            <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+                <form action="{{ route('ruangan.index') }}" method="GET" class="flex flex-col sm:flex-row items-center gap-2.5 flex-1 max-w-2xl">
+                    <div class="relative w-full sm:w-72">
+                        <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <circle cx="11" cy="11" r="8" stroke-width="2"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" stroke-width="2"></line>
+                            </svg>
+                        </span>
+                        <input
+                            type="text"
+                            name="search"
+                            value="{{ request('search') }}"
+                            placeholder="Cari nama, kode (0201), atau lokasi..."
+                            class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                        >
+                    </div>
+
+                    <!-- Dropdown Filter Lantai -->
+                    <div class="w-full sm:w-48">
+                        <select
+                            name="lantai"
+                            onchange="this.form.submit()"
+                            class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
+                        >
+                            <option value="">Semua Lantai</option>
+                            @foreach($daftarLantai as $lt)
+                                <option value="{{ $lt }}" {{ request('lantai') == $lt ? 'selected' : '' }}>
+                                    🏢 {{ $lt }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <button type="submit" class="w-full sm:w-auto px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-colors">
+                        Filter
+                    </button>
+
+                    @if(request()->filled('search') || request()->filled('lantai'))
+                        <a href="{{ route('ruangan.index') }}" class="w-full sm:w-auto px-3 py-2.5 text-center text-xs font-semibold text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-xl border border-rose-200 transition-colors">
+                            Reset
+                        </a>
+                    @endif
+                </form>
+
+                <div class="text-xs text-slate-500 font-medium shrink-0">
+                    Total: <span class="font-bold text-slate-800">{{ $ruangan->total() }}</span> Ruangan
+                    @if(request()->filled('lantai'))
+                        <span class="text-blue-600 font-semibold">({{ request('lantai') }})</span>
+                    @endif
+                </div>
+            </div>
+
+            <!-- Quick Floor Filter Pills -->
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+                <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1">Lantai:</span>
+                <a
+                    href="{{ route('ruangan.index', array_merge(request()->except('lantai', 'page'), ['lantai' => ''])) }}"
+                    class="px-3 py-1 rounded-lg font-semibold transition-all shrink-0 {{ !request('lantai') ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}"
+                >
+                    Semua
+                </a>
+                @foreach($daftarLantai as $lt)
+                    <a
+                        href="{{ route('ruangan.index', array_merge(request()->except('lantai', 'page'), ['lantai' => $lt])) }}"
+                        class="px-3 py-1 rounded-lg font-semibold transition-all shrink-0 {{ request('lantai') == $lt ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200' }}"
+                    >
+                        {{ $lt }}
+                    </a>
+                @endforeach
             </div>
         </div>
 
@@ -94,8 +144,8 @@
                             </td>
                             <td class="py-4 px-4 text-center">
                                 <div class="inline-flex items-center gap-1.5">
-                                    <a 
-                                        href="{{ route('cctv.index', ['ruangan_id' => $item->id]) }}" 
+                                    <a
+                                        href="{{ route('cctv.index', ['ruangan_id' => $item->id]) }}"
                                         class="p-2 rounded-xl text-blue-600 hover:bg-blue-50 transition-colors"
                                         title="Pantau Live CCTV"
                                     >
@@ -105,9 +155,9 @@
                                         </svg>
                                     </a>
 
-                                    <button 
-                                        type="button" 
-                                        onclick="openEditRoomModal({{ json_encode($item) }})" 
+                                    <button
+                                        type="button"
+                                        onclick="openEditRoomModal({{ json_encode($item) }})"
                                         class="p-2 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                                         title="Edit Data Ruangan"
                                     >
@@ -163,11 +213,11 @@
             @csrf
             <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Nama Ruangan</label>
-                <input 
-                    type="text" 
-                    name="nama" 
-                    required 
-                    placeholder="Contoh: Lab RPL 1, Ruang 301" 
+                <input
+                    type="text"
+                    name="nama"
+                    required
+                    placeholder="Contoh: Lab RPL 1, Ruang 301"
                     class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 >
             </div>
@@ -176,33 +226,33 @@
                 <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
                     Kode Ruangan <span class="text-[10px] text-slate-400 font-normal lowercase">(maks. 4 karakter unik)</span>
                 </label>
-                <input 
-                    type="text" 
-                    name="kode_ruangan" 
+                <input
+                    type="text"
+                    name="kode_ruangan"
                     maxlength="4"
-                    placeholder="Contoh: R101, L01" 
+                    placeholder="Contoh: R101, L01"
                     class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-mono font-bold uppercase text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 >
             </div>
 
             <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Lokasi / Gedung</label>
-                <input 
-                    type="text" 
-                    name="lokasi" 
-                    required 
-                    placeholder="Contoh: Gedung A Lantai 1" 
+                <input
+                    type="text"
+                    name="lokasi"
+                    required
+                    placeholder="Contoh: Gedung A Lantai 1"
                     class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 >
             </div>
 
             <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Link Stream CCTV (RTSP / HTTP)</label>
-                <input 
-                    type="text" 
-                    name="link_stream_cctv" 
+                <input
+                    type="text"
+                    name="link_stream_cctv"
                     required
-                    placeholder="Contoh: http://localhost/cctv/lab-rpl-1" 
+                    placeholder="Contoh: http://localhost/cctv/lab-rpl-1"
                     class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 >
             </div>
@@ -235,11 +285,11 @@
             @method('PUT')
             <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Nama Ruangan</label>
-                <input 
-                    type="text" 
-                    id="edit_nama" 
-                    name="nama" 
-                    required 
+                <input
+                    type="text"
+                    id="edit_nama"
+                    name="nama"
+                    required
                     class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 >
             </div>
@@ -248,10 +298,10 @@
                 <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">
                     Kode Ruangan <span class="text-[10px] text-slate-400 font-normal lowercase">(maks. 4 karakter unik)</span>
                 </label>
-                <input 
-                    type="text" 
-                    id="edit_kode_ruangan" 
-                    name="kode_ruangan" 
+                <input
+                    type="text"
+                    id="edit_kode_ruangan"
+                    name="kode_ruangan"
                     maxlength="4"
                     class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-mono font-bold uppercase text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 >
@@ -259,21 +309,21 @@
 
             <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Lokasi / Gedung</label>
-                <input 
-                    type="text" 
-                    id="edit_lokasi" 
-                    name="lokasi" 
-                    required 
+                <input
+                    type="text"
+                    id="edit_lokasi"
+                    name="lokasi"
+                    required
                     class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 >
             </div>
 
             <div>
                 <label class="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">Link Stream CCTV</label>
-                <input 
-                    type="text" 
-                    id="edit_link_stream_cctv" 
-                    name="link_stream_cctv" 
+                <input
+                    type="text"
+                    id="edit_link_stream_cctv"
+                    name="link_stream_cctv"
                     required
                     class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 >

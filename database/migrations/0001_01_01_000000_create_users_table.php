@@ -17,6 +17,8 @@ Schema::create('users', function (Blueprint $table) {
     $table->string('email', 100)->unique();
     $table->string('password', 255);
     $table->string('role', 20)->default('admin');
+    $table->string('google_id')->nullable();
+    $table->rememberToken();
     $table->timestamps();
 });
         Schema::create('password_reset_tokens', function (Blueprint $table) {
